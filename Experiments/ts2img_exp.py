@@ -79,11 +79,11 @@ for f in freqs:
         window[row,:] = flat_grid # ogni flat come riga di una matrice che racchiude tutto
         targets[row,:] = target
 
-        if target[-1]<0.98:
+        if target[-1]<0.995:
 
             cat_target = 2
 
-        elif target[-1] > 1.02:
+        elif target[-1] > 1.005:
 
             cat_target = 1
         else:
@@ -100,14 +100,15 @@ for f in freqs:
 
 # patterns_file = open("Experiments/flat_patterns.pkl", "wb")
 # pickle.dump(patterns, patterns_file)
-
+# patterns_file.close()
 snapshots_file = open("Experiments/snapshots.pkl", "wb")
 pickle.dump(snapshots, snapshots_file)
+snapshots_file.close()
 
 ##### PLOT SNAPSHOT
 
 freq_snapshot = '15T'
-time_snapshot = '2020-01-01 12:45:00'
+time_snapshot = '2020-01-01 12:30:00'
 
 fig = plt.figure(frameon=False)
 fig.set_size_inches(3,3)
@@ -134,58 +135,3 @@ Preparare filtri per convolution1.
 
 
 ######################################################## 1D CNN on windows
-
-from tensorflow.keras.layers import Dense, Conv1D, MaxPooling1D, Flatten
-from tensorflow.keras.models import Sequential
-
-
-# split a univariate sequence into samples
-def split_sequence(sequence, n_steps):
-
-    X, y = list(), list()
-    for i in range(sequence.shape[0]):
-        # find the end of this pattern
-        end_ix = i + n_steps
-        # check if we are beyond the sequence
-        if end_ix > len(sequence)-1:
-            break
-        # gather input and output parts of the pattern
-        seq_x, seq_y = sequence[i:end_ix], sequence[end_ix]
-        X.append(seq_x)
-        y.append(seq_y)
-    return np.array(X), np.array(y)
-
-
-X, y = split_sequence(data.close.to_numpy(), grid_size)
-
-n_features = 1
-n_steps = grid_size
-
-X = X.reshape((X.shape[0], X.shape[1], n_features))
-
-X_train = X[:-10]
-y_train = y[:-10]
-X_test = X[-10:]
-y_test = y[-10:]
-
-model = Sequential()
-model.add(Conv1D(filters=64, kernel_size=2, activation='relu', input_shape=(n_steps, n_features)))
-model.add(MaxPooling1D(pool_size=2))
-model.add(Flatten())
-model.add(Dense(50, activation='relu'))
-model.add(Dense(1))
-model.compile(optimizer='adam', loss='mse')
-
-model.fit(X_train, y_train, epochs=100, verbose=1)
-# demonstrate prediction
-x_input = X_test
-x_input = x_input.reshape((10, n_steps, n_features))
-yhat = model.predict(x_input, verbose=0)
-print(yhat)
-
-plt.figure()
-plt.plot(y_test,label = 'test')
-plt.plot(yhat,label = 'pred')
-plt.legend()
-
-######################################### 2D CNN on windows
