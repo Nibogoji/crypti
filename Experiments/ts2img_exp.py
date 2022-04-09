@@ -13,18 +13,23 @@ essere sempre l'ultimo settore sull asse X
 
 
 data = pd.read_csv("C:\\Users\\stesc\\Desktop\\crypti\\Data/LTC.csv",index_col=0)
+data_new = pd.read_csv("C:\\Users\\stesc\\Desktop\\crypti\\Data\\data_2021/LTC.csv",index_col=0)
+
 data.set_index(pd.to_datetime(data.index), inplace= True)
+data_new.set_index(pd.to_datetime(data_new.index), inplace= True)
+
+data = pd.concat([data[['close']],data_new[['close']]], axis=0)
 
 data.close = data.close.interpolate('quadratic')
 
 
 data = data.reset_index().pivot_table(columns=["index"]).T
-
-plt.plot(data.close)
+plt.plot(data)
+# plt.plot(data.close)
 
 # RESAMPLE LIBRARY : https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.resample.html
 
-freqs = ['6H','H','15T']
+freqs = ['60H', '4H','H','15T']
 
 patterns = {}
 snapshots = {}
@@ -42,7 +47,7 @@ for f in freqs:
 
     print(np.argwhere(np.isnan(ts)))
 
-    grid_size = 128
+    grid_size = 24
     counter = grid_size
     next = 2
     target_size = 4
@@ -58,16 +63,19 @@ for f in freqs:
     targets = np.zeros((n_windows, target_size))
     row = 0
 
-    while counter <= window.shape[0]-target_size:
+    while counter <= freqs_data.shape[0]-target_size:
 
         w = ts[counter-grid_size:counter] # window
+        thresh = np.std(w)/w[-1]
         target = ts[counter: counter+target_size]
 
         target = target / w[-1]
         w = w/w[-1]
 
         mat0 = np.zeros((grid_size, grid_size))
-        boundaries = np.linspace(min(w) - np.std(w), max(w) + np.std(w), grid_size)
+        boundaries = np.linspace(min(w), max(w), grid_size)
+
+        # boundaries = np.linspace(min(w) - np.std(w), max(w) + np.std(w), grid_size)
 
         for i, j in enumerate(w):
             for m in reversed(range(len(boundaries) - 1)):
@@ -79,18 +87,18 @@ for f in freqs:
         window[row,:] = flat_grid # ogni flat come riga di una matrice che racchiude tutto
         targets[row,:] = target
 
-        if target[-1]<0.995:
+        if np.sum(target<1) >=3:
 
             cat_target = 2
 
-        elif target[-1] > 1.005:
+        elif np.sum(target>1) >=3:
 
             cat_target = 1
         else:
             cat_target = 0
-
-        snapshots[f][freqs_data.index[counter-grid_size].strftime("%Y-%m-%d %H:%M:%S")] = (interpolate_pixels(mat0), target, cat_target)
-
+        print(freqs_data.index[counter-grid_size])
+        pattern_class = 'place holder'
+        snapshots[f][freqs_data.index[counter-grid_size].strftime("%Y-%m-%d %H:%M:%S")] = [interpolate_pixels(mat0), target, cat_target, pattern_class]
         row += 1
         counter += next
 
@@ -101,14 +109,22 @@ for f in freqs:
 # patterns_file = open("Experiments/flat_patterns.pkl", "wb")
 # pickle.dump(patterns, patterns_file)
 # patterns_file.close()
+
 snapshots_file = open("Experiments/snapshots.pkl", "wb")
 pickle.dump(snapshots, snapshots_file)
 snapshots_file.close()
 
+freq_snapshot = '60H'
+time_snapshot = '2021-02-07 00:00:00'
+
+# PATTERN CLASS LABEL
+snapshots[freq_snapshot][time_snapshot][3] = 1
+
 ##### PLOT SNAPSHOT
 
-freq_snapshot = '15T'
-time_snapshot = '2020-01-01 12:30:00'
+
+
+to_plot = snapshots[freq_snapshot][time_snapshot][0]
 
 fig = plt.figure(frameon=False)
 fig.set_size_inches(3,3)
