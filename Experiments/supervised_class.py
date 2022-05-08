@@ -39,6 +39,14 @@ for f in ['60H','4H','H','15T']:
 X = np.concatenate((X_tot[0], X_tot[1], X_tot[2], X_tot[3]))
 y = np.concatenate((y_tot[0], y_tot[1], y_tot[2], y_tot[3]))
 
+category=[]
+plt.ion()
+
+for i,image in enumerate(X[:10]):
+    plt.imshow(image, cmap = 'gray')
+    plt.pause(0.05)
+    category.append(int(input('category: ')))
+
 print(np.sum(y == 0))
 print(np.sum(y == 1))
 print(np.sum(y == 2))

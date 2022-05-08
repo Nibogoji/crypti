@@ -24,6 +24,7 @@ data.close = data.close.interpolate('quadratic')
 
 
 data = data.reset_index().pivot_table(columns=["index"]).T
+data = data.iloc[100000: 150000]
 plt.plot(data)
 # plt.plot(data.close)
 
@@ -110,15 +111,12 @@ for f in freqs:
 # pickle.dump(patterns, patterns_file)
 # patterns_file.close()
 
-snapshots_file = open("Experiments/snapshots.pkl", "wb")
-pickle.dump(snapshots, snapshots_file)
-snapshots_file.close()
+# snapshots_file = open("Experiments/snapshots.pkl", "wb")
+# pickle.dump(snapshots, snapshots_file)
+# snapshots_file.close()
 
-freq_snapshot = '60H'
-time_snapshot = '2021-02-07 00:00:00'
-
-# PATTERN CLASS LABEL
-snapshots[freq_snapshot][time_snapshot][3] = 1
+freq_snapshot = '15T'
+time_snapshot = '2020-07-28 18:00:00'
 
 ##### PLOT SNAPSHOT
 
@@ -132,7 +130,7 @@ fig.set_size_inches(3,3)
 ax = plt.Axes(fig, [0., 0., 1., 1.])
 ax.set_axis_off()
 fig.add_axes(ax)
-ax.imshow(snapshots[freq_snapshot][time_snapshot][0], cmap = 'gray')
+ax.imshow(to_plot, cmap = 'gray')
 # fig.savefig('Experiments/ts_img.png')
 """
 
